@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Settings">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        style="@style/MyToolBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/from"
+        app:layout_constraintTop_toBottomOf="@+id/from">
+
+        <RadioButton
+            android:id="@+id/shPref"
+            style="@style/myRadioButton"
+            android:text="@string/shared_preferences"
+            android:textSize="24sp" />
+
+        <RadioButton
+            android:id="@+id/extStor"
+            style="@style/myRadioButton"
+            android:text="@string/external_storage"
+            android:textSize="24sp" />
+
+        <RadioButton
+            android:id="@+id/intStor"
+            style="@style/myRadioButton"
+            android:text="@string/internal_storage"
+            android:textSize="24sp" />
+
+        <RadioButton
+            android:id="@+id/dataBase"
+            style="@style/myRadioButton"
+            android:text="@string/database"
+            android:textSize="24sp" />
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/from"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:text="@string/from"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+
+</android.support.constraint.ConstraintLayout>

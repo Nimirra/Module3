@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Module3</string>
+    <string name="tasks">Tasks</string>
+    <string name="settings">Settings</string>
+    <string name="save">Save</string>
+    <string name="name">Title</string>
+    <string name="description">Description</string>
+    <string name="shared_preferences">Shared preferences</string>
+    <string name="external_storage">External Storage</string>
+    <string name="internal_storage">Internal Storage</string>
+    <string name="database">Database</string>
+    <string name="all">All</string>
+    <string name="favorite">Favorite</string>
+    <string name="from">From:</string>
+    <string name="newTask">New Task</string>
+</resources>
