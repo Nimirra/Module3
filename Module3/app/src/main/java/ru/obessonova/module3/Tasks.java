@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,24 +23,27 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Tasks extends AppCompatActivity implements AsincTaskListener{
+public class Tasks extends AppCompatActivity implements AsincTaskListener {
     private static final String APP_PREFERENCES = "mysettings";
     static SharedPreferences sSettings;
     static FileOutputStream sOutputStream;
     private final int REQUEST_CODE_LIST = 1;
     private final int REQUEST_CODE_SETTINGS = 2;
+    private final int REQUEST_CODE_CHANGE = 3;
+    private final int REQUEST_CODE_CHANGE_FAVOURITE = 4;
+    File mFile;
     private List<Task> mTaskList = new ArrayList<>();
     private List<Task> mFavouriteTaskList = new ArrayList<>();
-    File mFile;
     private Storage mMyStorage = new InternalStorage();
     private TabLayout mTabs;
     private RecyclerView mRecyclerView;
     private RecyclerView mFavouriteRecyclerView;
-    private RecyclerView.Adapter mMyAdapter;
-    private RecyclerView.Adapter mMyAdapterForFavourite;
+    private MyAdapter mMyAdapter;
+    private MyAdapter mMyAdapterForFavourite;
     private RecyclerView.LayoutManager mLayoutManager;
-    private RecyclerView.LayoutManager mLayoutManagerforFavour;
+    private RecyclerView.LayoutManager mLayoutManagerForFavour;
     private ProgressBar mProgressRound;
+    private Task mChangeTask;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,23 +83,16 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener{
         mTabs = findViewById(R.id.tabs);
         mRecyclerView = findViewById(R.id.myList);
         mFavouriteRecyclerView = findViewById(R.id.myFavouritelist);
-        startSetAdapter();
+        setAllTasks();
         mTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
                     case 0:
-                        mFavouriteRecyclerView.setVisibility(View.GONE);
-                        mRecyclerView.setVisibility(View.VISIBLE);
-                        startSetAdapter();
+                        setAllTasks();
                         break;
                     case 1:
-                        mFavouriteRecyclerView.setVisibility(View.VISIBLE);
-                        mRecyclerView.setVisibility(View.GONE);
-                        mLayoutManagerforFavour = new LinearLayoutManager(Tasks.this);
-                        mMyAdapterForFavourite = new MyAdapter(Tasks.this, mFavouriteTaskList);
-                        mFavouriteRecyclerView.setLayoutManager(mLayoutManagerforFavour);
-                        mFavouriteRecyclerView.setAdapter(mMyAdapterForFavourite);
+                        setFavouriteTasks();
                         break;
                 }
             }
@@ -112,11 +109,76 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener{
         });
     }
     
-    private void startSetAdapter() {
+    private void setAllTasks() {
+        mFavouriteRecyclerView.setVisibility(View.GONE);
+        mRecyclerView.setVisibility(View.VISIBLE);
         mLayoutManager = new LinearLayoutManager(Tasks.this);
         mMyAdapter = new MyAdapter(Tasks.this, mTaskList);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mMyAdapter);
+        mMyAdapter.setListener(new MyAdapter.Listener() {
+            
+            @Override
+            public void onClickChange(int position) {
+                mChangeTask = mTaskList.get(position);
+                Intent intent = new Intent(Tasks.this, ChangeTask.class);
+                intent.putExtra(ChangeTask.EXTRA_KEY_TITLE, mChangeTask.getTitle());
+                intent.putExtra(ChangeTask.EXTRA_KEY_DESCRIPT, mChangeTask.getDescript());
+                startActivityForResult(intent, REQUEST_CODE_CHANGE);
+                mTaskList.remove(position);
+                mRecyclerView.setAdapter(mMyAdapter);
+            }
+            
+            @Override
+            public void onClickDel(int position) {
+                mTaskList.remove(position);
+                mRecyclerView.setAdapter(mMyAdapter);
+            }
+            
+            @Override
+            public void onClickAdd(int position) {
+                mFavouriteTaskList.add(mTaskList.get(position));
+                setFavouriteTasks();
+                mTabs.getTabAt(1).select();
+            }
+        });
+    }
+    
+    private void setFavouriteTasks() {
+        mFavouriteRecyclerView.setVisibility(View.VISIBLE);
+        mRecyclerView.setVisibility(View.GONE);
+        mLayoutManagerForFavour = new LinearLayoutManager(Tasks.this);
+        mMyAdapterForFavourite = new MyAdapter(Tasks.this, mFavouriteTaskList);
+        mFavouriteRecyclerView.setLayoutManager(mLayoutManagerForFavour);
+        mFavouriteRecyclerView.setAdapter(mMyAdapterForFavourite);
+        mMyAdapterForFavourite.setListener(new MyAdapter.Listener() {
+            @Override
+            public void onClickChange(int position) {
+                mChangeTask = mFavouriteTaskList.get(position);
+                Intent intent = new Intent(Tasks.this, ChangeTask.class);
+                intent.putExtra(ChangeTask.EXTRA_KEY_TITLE, mChangeTask.getTitle());
+                intent.putExtra(ChangeTask.EXTRA_KEY_DESCRIPT, mChangeTask.getDescript());
+                startActivityForResult(intent, REQUEST_CODE_CHANGE_FAVOURITE);
+                for (Task el : mTaskList) {
+                    if (el.equals(mChangeTask)) {
+                        mTaskList.remove(el);
+                    }
+                }
+                mFavouriteTaskList.remove(position);
+                mFavouriteRecyclerView.setAdapter(mMyAdapterForFavourite);
+            }
+            
+            @Override
+            public void onClickDel(int position) {
+                mFavouriteTaskList.remove(position);
+                mRecyclerView.setAdapter(mMyAdapter);
+            }
+            
+            @Override
+            public void onClickAdd(int position) {
+                Toast.makeText(Tasks.this, "Task  is already in favorites", Toast.LENGTH_LONG).show();
+            }
+        });
     }
     
     public void clickFAB(View view) {
@@ -135,9 +197,25 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener{
                     task.setMyStorage(mMyStorage);
                     mTaskList.add(task);
                     break;
+                    /* MyAsyncTask myAsyncTask = new MyAsyncTask(this);
+                    myAsyncTask.execute();*/
+                //застряла, поскольку AsyncTask статическая,а в нее нужно передать код.
                 case REQUEST_CODE_SETTINGS:
                     mMyStorage = ((Task) arguments.getSerializable(Settings.class.getSimpleName()))
                             .getStorage();
+                    break;
+                case REQUEST_CODE_CHANGE:
+                    Task changeTask = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
+                    mChangeTask.setTitle(changeTask.getTitle());
+                    mChangeTask.setDescript(changeTask.getDescript());
+                    mTaskList.add(mChangeTask);
+                    break;
+                case REQUEST_CODE_CHANGE_FAVOURITE:
+                    Task changeTaskFavourite = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
+                    mChangeTask.setTitle(changeTaskFavourite.getTitle());
+                    mChangeTask.setDescript(changeTaskFavourite.getDescript());
+                    mTaskList.add(mChangeTask);
+                    mFavouriteTaskList.add(mChangeTask);
                     break;
             }
         }
@@ -170,12 +248,8 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener{
         protected Void doInBackground(Task... task) {
             
             
-            
-            
-            
             return null;
         }
-        
         
         @Override
         protected void onPostExecute(Void aVoid) {

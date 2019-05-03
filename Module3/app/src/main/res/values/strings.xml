@@ -13,4 +13,8 @@
     <string name="favorite">Favorite</string>
     <string name="from">From:</string>
     <string name="newTask">New Task</string>
+    <string name="add_task_to_favourite">Add task to favourite</string>
+    <string name="delete_task">Delete task</string>
+    <string name="change_task">Change task</string>
+    <string name="change_task_activity">Change Task</string>
 </resources>
