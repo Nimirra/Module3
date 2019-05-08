@@ -35,10 +35,14 @@ public class NewTask extends AppCompatActivity {
             case R.id.saveMenu:
                 Intent intent = new Intent();
                 Task newTask = new Task();
-                newTask.setTitle(mTitle.getText().toString());
-                newTask.setDescript(mDescript.getText().toString());
-                intent.putExtra(NewTask.class.getSimpleName(), newTask);
-                setResult(RESULT_OK, intent);
+                if (mTitle.length() != 0 || mDescript.length() != 0) {
+                    newTask.setTitle(mTitle.getText().toString());
+                    newTask.setDescript(mDescript.getText().toString());
+                    intent.putExtra(NewTask.class.getSimpleName(), newTask);
+                    setResult(RESULT_OK, intent);
+                } else {
+                    setResult(RESULT_CANCELED, intent);
+                }
                 finish();
             default:
                 return super.onOptionsItemSelected(item);

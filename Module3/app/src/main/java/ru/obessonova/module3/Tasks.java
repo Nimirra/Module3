@@ -3,8 +3,9 @@ package ru.obessonova.module3;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,7 +24,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Tasks extends AppCompatActivity implements AsincTaskListener {
+public class Tasks extends AppCompatActivity {
     private static final String APP_PREFERENCES = "mysettings";
     static SharedPreferences sSettings;
     static FileOutputStream sOutputStream;
@@ -44,6 +45,9 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener {
     private RecyclerView.LayoutManager mLayoutManagerForFavour;
     private ProgressBar mProgressRound;
     private Task mChangeTask;
+    private Task mTask;
+    private MyHandler mMyHandler = new MyHandler(this);
+    private Message mMsg;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,16 +197,23 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE_LIST:
-                    Task task = (Task) arguments.getSerializable(NewTask.class.getSimpleName());
-                    task.setMyStorage(mMyStorage);
-                    mTaskList.add(task);
+                    mTask = (Task) arguments.getSerializable(NewTask.class.getSimpleName());
+                    
+                    Thread newThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMsg = mMyHandler.obtainMessage();
+                            mMsg.obj = mMyStorage;
+                            mMsg.sendToTarget();
+                        }
+                    });
+                    newThread.start();
+                    mMyHandler.handleMessage(mMsg);
+                    mTaskList.add(mTask);
                     break;
-                    /* MyAsyncTask myAsyncTask = new MyAsyncTask(this);
-                    myAsyncTask.execute();*/
-                //застряла, поскольку AsyncTask статическая,а в нее нужно передать код.
                 case REQUEST_CODE_SETTINGS:
                     mMyStorage = ((Task) arguments.getSerializable(Settings.class.getSimpleName()))
-                            .getStorage();
+                            .getMyStorage();
                     break;
                 case REQUEST_CODE_CHANGE:
                     Task changeTask = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
@@ -221,40 +232,20 @@ public class Tasks extends AppCompatActivity implements AsincTaskListener {
         }
     }
     
-    @Override
-    public void onStartProgress() {
-        mProgressRound.setVisibility(View.VISIBLE);
-    }
-    
-    @Override
-    public void onFinishProgress() {
-        mProgressRound.setVisibility(View.GONE);
-    }
-    
-    private static class MyAsyncTask extends AsyncTask<Task, Integer, Void> {
-        private final WeakReference<AsincTaskListener> mWeakListener;
+    private static class MyHandler extends Handler {
         
-        MyAsyncTask(AsincTaskListener listener) {
-            mWeakListener = new WeakReference<>(listener);
+        private final WeakReference<Tasks> mWeakActivity;
+        
+        MyHandler(Tasks activity) {
+            mWeakActivity = new WeakReference<>(activity);
         }
         
         @Override
-        protected void onPreExecute() {
-            AsincTaskListener listener = mWeakListener.get();
-            if (listener != null) listener.onStartProgress();
-        }
-        
-        @Override
-        protected Void doInBackground(Task... task) {
-            
-            
-            return null;
-        }
-        
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            AsincTaskListener listener = mWeakListener.get();
-            if (listener != null) listener.onFinishProgress();
+        public void handleMessage(Message msg) {
+            Tasks activity = mWeakActivity.get();
+            if (activity != null) {
+                activity.mTask.setMyStorage((Storage) msg.obj);
+            }
         }
     }
 }
