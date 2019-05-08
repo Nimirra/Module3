@@ -21,8 +21,6 @@ public class Settings extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
                 Intent intent = new Intent();
-                Task settingsTask = new Task();
-                
                 switch (i) {
                     case R.id.shPref:
                         mStorage = new MySharedPreferences();
@@ -37,8 +35,7 @@ public class Settings extends AppCompatActivity {
                         mStorage = new Database();
                         break;
                 }
-                settingsTask.setMyStorage(mStorage);
-                intent.putExtra(Settings.class.getSimpleName(), settingsTask);
+                intent.putExtra(Settings.class.getSimpleName(), mStorage);
                 setResult(RESULT_OK, intent);
                 finish();
             }

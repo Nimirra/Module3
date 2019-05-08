@@ -14,7 +14,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.File;
@@ -23,6 +22,7 @@ import java.io.FileOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Tasks extends AppCompatActivity {
     private static final String APP_PREFERENCES = "mysettings";
@@ -41,9 +41,6 @@ public class Tasks extends AppCompatActivity {
     private RecyclerView mFavouriteRecyclerView;
     private MyAdapter mMyAdapter;
     private MyAdapter mMyAdapterForFavourite;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private RecyclerView.LayoutManager mLayoutManagerForFavour;
-    private ProgressBar mProgressRound;
     private Task mChangeTask;
     private Task mTask;
     private MyHandler mMyHandler = new MyHandler(this);
@@ -83,7 +80,6 @@ public class Tasks extends AppCompatActivity {
     
     private void initUI() {
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-        mProgressRound = findViewById(R.id.progressBarRound);
         mTabs = findViewById(R.id.tabs);
         mRecyclerView = findViewById(R.id.myList);
         mFavouriteRecyclerView = findViewById(R.id.myFavouritelist);
@@ -116,7 +112,7 @@ public class Tasks extends AppCompatActivity {
     private void setAllTasks() {
         mFavouriteRecyclerView.setVisibility(View.GONE);
         mRecyclerView.setVisibility(View.VISIBLE);
-        mLayoutManager = new LinearLayoutManager(Tasks.this);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(Tasks.this);
         mMyAdapter = new MyAdapter(Tasks.this, mTaskList);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mMyAdapter);
@@ -143,7 +139,7 @@ public class Tasks extends AppCompatActivity {
             public void onClickAdd(int position) {
                 mFavouriteTaskList.add(mTaskList.get(position));
                 setFavouriteTasks();
-                mTabs.getTabAt(1).select();
+                Objects.requireNonNull(mTabs.getTabAt(1)).select();
             }
         });
     }
@@ -151,7 +147,7 @@ public class Tasks extends AppCompatActivity {
     private void setFavouriteTasks() {
         mFavouriteRecyclerView.setVisibility(View.VISIBLE);
         mRecyclerView.setVisibility(View.GONE);
-        mLayoutManagerForFavour = new LinearLayoutManager(Tasks.this);
+        RecyclerView.LayoutManager mLayoutManagerForFavour = new LinearLayoutManager(Tasks.this);
         mMyAdapterForFavourite = new MyAdapter(Tasks.this, mFavouriteTaskList);
         mFavouriteRecyclerView.setLayoutManager(mLayoutManagerForFavour);
         mFavouriteRecyclerView.setAdapter(mMyAdapterForFavourite);
@@ -195,44 +191,43 @@ public class Tasks extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Bundle arguments = data.getExtras();
         if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case REQUEST_CODE_LIST:
-                    mTask = (Task) arguments.getSerializable(NewTask.class.getSimpleName());
-                    
-                    Thread newThread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mMsg = mMyHandler.obtainMessage();
-                            mMsg.obj = mMyStorage;
-                            mMsg.sendToTarget();
-                        }
-                    });
-                    newThread.start();
-                    mMyHandler.handleMessage(mMsg);
-                    mTaskList.add(mTask);
-                    break;
-                case REQUEST_CODE_SETTINGS:
-                    mMyStorage = ((Task) arguments.getSerializable(Settings.class.getSimpleName()))
-                            .getMyStorage();
-                    break;
-                case REQUEST_CODE_CHANGE:
-                    Task changeTask = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
-                    mChangeTask.setTitle(changeTask.getTitle());
-                    mChangeTask.setDescript(changeTask.getDescript());
-                    mTaskList.add(mChangeTask);
-                    break;
-                case REQUEST_CODE_CHANGE_FAVOURITE:
-                    Task changeTaskFavourite = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
-                    mChangeTask.setTitle(changeTaskFavourite.getTitle());
-                    mChangeTask.setDescript(changeTaskFavourite.getDescript());
-                    mTaskList.add(mChangeTask);
-                    mFavouriteTaskList.add(mChangeTask);
-                    break;
+            if (arguments != null) {
+                switch (requestCode) {
+                    case REQUEST_CODE_LIST:
+                        mTask = (Task) arguments.getSerializable(NewTask.class.getSimpleName());
+                        Thread newThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mMsg = mMyHandler.obtainMessage(MyHandler.MESSAGE_TYPE_1, mMyStorage);
+                                mMsg.sendToTarget();
+                            }
+                        });
+                        newThread.start();
+                        mTaskList.add(mTask);
+                        break;
+                    case REQUEST_CODE_SETTINGS:
+                        mMyStorage = (Storage) arguments.getSerializable(Settings.class.getSimpleName());
+                        break;
+                    case REQUEST_CODE_CHANGE:
+                        Task changeTask = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
+                        mChangeTask.setTitle(changeTask.getTitle());
+                        mChangeTask.setDescript(changeTask.getDescript());
+                        mTaskList.add(mChangeTask);
+                        break;
+                    case REQUEST_CODE_CHANGE_FAVOURITE:
+                        Task changeTaskFavourite = (Task) arguments.getSerializable(ChangeTask.class.getSimpleName());
+                        mChangeTask.setTitle(changeTaskFavourite.getTitle());
+                        mChangeTask.setDescript(changeTaskFavourite.getDescript());
+                        mTaskList.add(mChangeTask);
+                        mFavouriteTaskList.add(mChangeTask);
+                        break;
+                }
             }
         }
     }
     
     private static class MyHandler extends Handler {
+        public static final int MESSAGE_TYPE_1 = 1;
         
         private final WeakReference<Tasks> mWeakActivity;
         

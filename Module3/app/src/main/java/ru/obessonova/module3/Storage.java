@@ -1,5 +1,7 @@
 package ru.obessonova.module3;
 
-public interface Storage {
+import java.io.Serializable;
+
+public interface Storage extends Serializable {
     void setStorage(String title, String descript);
 }

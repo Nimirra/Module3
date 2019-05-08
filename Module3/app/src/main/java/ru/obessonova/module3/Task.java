@@ -36,8 +36,8 @@ public class Task implements Serializable {
         return myStorage;
     }
     
-    public void setMyStorage(Storage myStorage) {
-        this.myStorage = myStorage;
+    public void setMyStorage(Storage storage) {
+        myStorage = storage;
         myStorage.setStorage(title, descript);
     }
 }
